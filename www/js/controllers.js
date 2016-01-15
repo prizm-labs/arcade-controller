@@ -1,4 +1,4 @@
-angular.module('starter.controllers', [])
+angular.module('starter.controllers', ['btford.socket-io'])
 
 .controller('DashCtrl', function($scope,$ionicModal) {
 
@@ -16,21 +16,28 @@ angular.module('starter.controllers', [])
 
     var modalInitialized = false;
 
+    $scope.$on('socket:connect', function (ev, data) {
+      console.log(ev,data);
+    });
+
+    $scope.$on('socket:error', function (ev, data) {
+      console.log(ev,data);
+    });
+
+    $scope.$on('socket:message', function (ev, data) {
+      console.log(ev,data);
+    });
+
+
     function bootstrapInteractions() {
-      var myElement = document.getElementById('myElement');
-
-      // create a simple instance
-      // by default, it only adds horizontal recognizers
-      var mc = new Hammer(myElement);
-
-      // let the pan gesture support all directions.
-      // this will block the vertical scrolling on a touch-device while on the element
-      mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-
-      // listen to events...
-      mc.on("panleft panright panup pandown tap press", function(ev) {
-          myElement.textContent = ev.type +" gesture detected.";
+      var socket = io(window.websocketHost); // TIP: io() with no args does auto-discovery
+      socket.on('connect', function () { // TIP: you can avoid listening on `connect` and listen on events directly too!
+        socket.emit('fromHandheld', 'tobi', function (data) {
+          console.log(data); // data will be 'woot'
+        });
       });
+
+      bindHandlers('myElement',socket);
     }
 
     $ionicModal.fromTemplateUrl('templates/controller-modal.html', {

@@ -1,13 +1,31 @@
 /* Empty. Add your own CSS if you like */
-#myElement {
+/*#myElement {
   background: silver;
   height: 300px;
   text-align: center;
   font: 30px/300px Helvetica, Arial, sans-serif;
-}
+}*/
 
 .phaser-canvas {
-  height: 200px;
+  height: 300px;
+  width: 300px;
+  position: relative;
   overflow: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+#wrapper {
+position: relative;
+
+}
+
+.elemental {
+  top: 100;
+  left: 100;
+  background:yellow;
+  height: 200px;
+  width: 200px;
+  text-align: center;
+  font: 30px/300px Helvetica, Arial, sans-serif;
+  position: absolute;
 }
