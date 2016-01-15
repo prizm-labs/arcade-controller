@@ -1,6 +1,6 @@
 angular.module('starter.controllers', ['btford.socket-io'])
 
-.controller('DashCtrl', function($scope,$ionicModal) {
+.controller('DashCtrl', function($scope,$ionicModal,socket) {
 
   document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady()
@@ -24,20 +24,19 @@ angular.module('starter.controllers', ['btford.socket-io'])
       console.log(ev,data);
     });
 
-    $scope.$on('socket:message', function (ev, data) {
+    $scope.$on('socket:toTabletop', function (ev, data) {
       console.log(ev,data);
     });
 
 
     function bootstrapInteractions() {
-      var socket = io(window.websocketHost); // TIP: io() with no args does auto-discovery
-      socket.on('connect', function () { // TIP: you can avoid listening on `connect` and listen on events directly too!
-        socket.emit('fromHandheld', 'tobi', function (data) {
-          console.log(data); // data will be 'woot'
-        });
+
+      window.ioSocket.emit('fromHandheld', 'tobi', function (data) {
+        console.log(data); // data will be 'woot'
       });
 
-      bindHandlers('myElement',socket);
+      bindJoystickHandlers('joystick-knob',window.ioSocket);
+      bindButtonHandlers('button-center',window.ioSocket);
     }
 
     $ionicModal.fromTemplateUrl('templates/controller-modal.html', {
@@ -65,6 +64,7 @@ angular.module('starter.controllers', ['btford.socket-io'])
 
       if (!modalInitialized) {
         bootstrapInteractions();
+        modalInitialized = true;
       }
     });
 

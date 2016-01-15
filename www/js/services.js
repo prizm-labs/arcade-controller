@@ -2,15 +2,17 @@ angular.module('starter.services', ['btford.socket-io'])
 
 .factory('socket',function(socketFactory){
   //Create socket and connect to http://chat.socket.io
-  var myIoSocket = io.connect('http://10.0.1.130:9999');
+  var ioSocket = io.connect('http://10.0.1.130:9999');
 
-   mySocket = socketFactory({
-     ioSocket: myIoSocket
-   });
+  var ngSocket = socketFactory({
+   ioSocket: ioSocket
+  });
 
-   mySocket.forward(['error','connect','message']);
+  ngSocket.forward(['error','connect','message','toTabletop']);
 
-  return mySocket;
+  window.ioSocket = ioSocket;
+
+  return ngSocket;
 })
 
 .factory('Chats', function() {

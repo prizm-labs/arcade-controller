@@ -27,14 +27,18 @@
     <!--socket io client library-->
     <!-- <script src="http://localhost:9999/socket.io/socket.io.js"> -->
     <script>
-        window.websocketHost = "http://localhost:9999/";
-        $.ajax({
-          url: websocketHost+"socket.io/socket.io.js",
-          dataType: "script",
-          success: function(err,msg){
+        // expose for other scripts
+        window.websocketHost = "http://10.0.1.130:9999/";
 
-          }
-        });
+        loadScriptSync(window.websocketHost+"socket.io/socket.io.js");
+
+        function loadScriptSync (src) {
+            var s = document.createElement('script');
+            s.src = src;
+            s.type = "text/javascript";
+            s.async = false;                                 // <-- this is important
+            document.getElementsByTagName('head')[0].appendChild(s);
+        }
     </script>
     <script src="lib/angular-socket-io/socket.js"></script>
 
