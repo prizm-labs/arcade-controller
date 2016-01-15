@@ -25,7 +25,7 @@ angular.module('starter.controllers', ['btford.socket-io'])
     });
 
     $scope.$on('socket:toTabletop', function (ev, data) {
-      console.log(ev,data);
+      //console.log(ev,data);
     });
 
 

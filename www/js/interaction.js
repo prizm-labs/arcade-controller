@@ -7,12 +7,23 @@ function bindButtonHandlers( elementId, socket ) {
   var element = document.getElementById(elementId);
   var manager = new Hammer.Manager(element);
 
+  var pressThreshold = 150;
+
   var press1 = new Hammer.Press({
     event:'press1',
     pointers:1,
-    threshold: 20,
-    time: 10
+    threshold: 100,
+    time: pressThreshold
   });
+
+  var tap1 = new Hammer.Tap({
+    event:'tap1',
+    pointers:1,
+    time: pressThreshold-1,
+    threshold: 100
+  });
+
+  var pressStart = null;
 
   var timeToMaxSize = 2;
   var maxSize = 200;
@@ -27,29 +38,73 @@ function bindButtonHandlers( elementId, socket ) {
   height: 200px;
   */
 
-  manager.add([press1]);
+  // tap1.recognizeWith(press1);
+  // press1.requireFailure(tap1);
+
+  manager.add([press1,tap1]);
+
+  manager.on("tap1",function(event){
+    console.log("tap1",event);
+    $(event.target).css({background:"orange"});
+
+    socket.emit('fromHandheld',{'type':'fireQuick','player':1});
+
+    endCharge(event);
+
+    if (manager.currentTimeout) clearTimeout(manager.currentTimeout);
+
+    manager.currentTimeout = setTimeout(function(){
+      $(event.target).css({background:"red"});
+    },50);
+  });
 
   manager.on("press1",function(event){
     console.log("press1",event);
+
+    pressStart = new Date();
+
     targetSize = maxSize+"px";
     targetSize2 = "50%";
     manager.currentTween = TweenLite.to(event.target, timeToMaxSize, {
       "height":maxSize, "width":maxSize,
       "top":maxPosition,"left":maxPosition,
+      background:"orange",
       // "-moz-border-radius": targetSize2,
       // "-webkit-border-radius": targetSize2,
-      "borderRadius": targetSize2
+      "borderRadius": targetSize2,
+      onComplete: function() {
+        // if press up has not fired yet
+        if (pressStart!==null) {
+          endCharge(event);
+        }
+      }
     });
+
+    socket.emit('fromHandheld',{'type':'startCharge','player':1});
   });
 
   manager.on("press1up",function(event){
     console.log("press1up",event);
-    manager.currentTween.kill();
-    $(event.target).css({
-      height:defaultSize,width:defaultSize,
-      "top":defaultPosition,"left":defaultPosition
-    });
+    
+    
+    endCharge(event);
   });
+
+  function endCharge(event){
+    if (manager.currentTween) {
+      manager.currentTween.kill();
+      socket.emit('fromHandheld',{'type':'endCharge','player':1});
+
+      manager.currentTween = null;
+      pressStart = null;
+
+      $(event.target).css({
+        height:defaultSize,width:defaultSize,
+        "top":defaultPosition,"left":defaultPosition,
+        background:"red"
+      });
+    }    
+  }
 }
 
 function bindJoystickHandlers( elementId, socket ) {
