@@ -678,7 +678,7 @@ Collection.prototype._localToLocalUpdate = function (id, fields) {
 			existing[field] = fields[field];
 		}
 	}
-	this._set.put(id, existing);
+	this._set.put(id, existing, true);
 	// Return a promise, just for api consistency
 	return Q(id);
 };
@@ -698,7 +698,7 @@ Collection.prototype._remoteToLocalUpdate = function (id, fields) {
 		existing[field] = fields[field];
 	}
 	// Perform the update
-	this._set.put(id, existing);
+	this._set.put(id, existing, true);
 };
 Collection.prototype._localToRemoteUpdate = function (id, fields) {
 	var self = this;
@@ -752,11 +752,17 @@ var ReactiveQuery = function (set) {
 
 	self._set.on("put", function (id) {
 		self._getResult();
-		self._emit("change", id);
+		self._emit("added", id);
 	});
+
+	self._set.on("update", function (id) {
+		self._getResult();
+		self._emit("changed", id);
+	});
+
 	self._set.on("del", function (id) {
 		self._getResult();
-		self._emit("change", id);
+		self._emit("removed", id);
 	});
 
 };
@@ -957,13 +963,15 @@ var Set = function (readonly) {
 Set.prototype = Object.create(Asteroid.utils.EventEmitter.prototype);
 Set.constructor = Set;
 
-Set.prototype.put = function (id, item) {
+Set.prototype.put = function (id, item, isExisting) {
 	// Assert arguments type
 	Asteroid.utils.must.beString(id);
 	Asteroid.utils.must.beObject(item);
 	// Save a clone to avoid collateral damage
 	this._items[id] = Asteroid.utils.clone(item);
-	this._emit("put", id);
+
+	if (isExisting) this._emit("update", id) 
+	else this._emit("put", id);
 	// Return the set instance to allow method chainging
 	return this;
 };

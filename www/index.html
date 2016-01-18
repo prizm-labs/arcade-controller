@@ -20,16 +20,24 @@
     <script src="lib/gsap/src/minified/easing/EasePack.min.js"></script>
     <script src="lib/gsap/src/minified/TweenLite.min.js"></script>
     <script src="lib/hammerjs/hammer.min.js"></script>
+
     <script src="lib/ddp.js/src/ddp.js"></script>
     <script src="lib/q/q.js"></script>
     <script src="lib/asteroid/dist/asteroid.browser.js"></script>
 
+    <script src="lib/chance/dist/chance.min.js"></script>
+
     <!--socket io client library-->
     <!-- <script src="http://localhost:9999/socket.io/socket.io.js"> -->
     <script>
-        // expose for other scripts
-        window.websocketHost = "http://10.0.1.130:9999/"; // Michael's iMac
-        //window.websocketHost = "http://10.0.0.161:9999/"; // John's PC
+        window.hostAddress = "10.0.1.78"; // Lobby Unit
+        //window.hostAddress = "10.0.1.130"; // Michael's iMac
+        //window.hostAddress = "10.0.0.161";  // John's PC
+        window.websocketPort = 9998;
+        window.meteorPort = 6969;
+
+        window.websocketHost = ["http://",window.hostAddress,":",window.websocketPort+"/"].join("");
+        window.meteorHost = [window.hostAddress,":",window.meteorPort].join("");
 
         loadScriptSync(window.websocketHost+"socket.io/socket.io.js");
 
@@ -49,6 +57,8 @@
 
     <!-- your app's js -->
     <script src="js/interaction.js"></script>
+    <script src="js/meteor.js"></script>
+
     <script src="js/app.js"></script>
     <script src="js/controllers.js"></script>
     <script src="js/services.js"></script>

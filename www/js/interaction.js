@@ -1,6 +1,14 @@
 window.bindButtonHandlers = bindButtonHandlers;
 window.bindJoystickHandlers = bindJoystickHandlers;
 
+function emitToSocket(socket,message) {
+
+  if (!window.player) return;
+
+  message.player = window.player._id;
+  socket.emit('fromHandheld',message);
+}
+
 function bindButtonHandlers( elementId, socket ) {
   console.log("bindButtonHandlers");
 
@@ -47,7 +55,8 @@ function bindButtonHandlers( elementId, socket ) {
     console.log("tap1",event);
     $(event.target).css({background:"orange"});
 
-    socket.emit('fromHandheld',{'type':'fireQuick','player':1});
+    emitToSocket(socket,{'type':'fireQuick'});
+    //socket.emit('fromHandheld',{'type':'fireQuick','player':1});
 
     endCharge(event);
 
@@ -80,7 +89,8 @@ function bindButtonHandlers( elementId, socket ) {
       }
     });
 
-    socket.emit('fromHandheld',{'type':'startCharge','player':1});
+    //socket.emit('fromHandheld',{'type':'startCharge','player':1});
+    emitToSocket(socket,{'type':'startCharge'});
   });
 
   manager.on("press1up",function(event){
@@ -93,7 +103,8 @@ function bindButtonHandlers( elementId, socket ) {
   function endCharge(event){
     if (manager.currentTween) {
       manager.currentTween.kill();
-      socket.emit('fromHandheld',{'type':'endCharge','player':1});
+      //socket.emit('fromHandheld',{'type':'endCharge','player':1});
+      emitToSocket(socket,{'type':'endCharge'});
 
       manager.currentTween = null;
       pressStart = null;
@@ -112,6 +123,9 @@ function bindJoystickHandlers( elementId, socket ) {
 
   var element = document.getElementById(elementId);
   var manager = new Hammer.Manager(element);
+
+  var defaultPosition = 55;
+  var maxDelta = 80;
 
   var pan1 = new Hammer.Pan({
     event: 'pan1',
@@ -138,14 +152,13 @@ function bindJoystickHandlers( elementId, socket ) {
   manager.on("pan1move pan2move", function(ev) {
     moveUpdate(ev);
 
-    socket.emit('fromHandheld', {velocity:ev.velocity,angle:ev.angle}, function (data) {
-      console.log(data); // data will be 'woot'
-    });
+    //updatePositionDelta(ev);
+    updatePositionDeltaByAbsolutePositionControlScheme(ev);
   });
 
   manager.on("pan1end pan2end", function(ev) {
 
-    impartMomentum(ev);
+    //impartMomentum(ev);
   });
 
   manager.on("rotatestart",function(ev){
@@ -177,6 +190,81 @@ function bindJoystickHandlers( elementId, socket ) {
   manager.on("rotateend",function(ev){
 
   });
+
+  function updatePositionDelta(ev) {
+
+    var yDelta = -(parseInt($(ev.target).css("top"))-defaultPosition);
+    var xDelta = parseInt($(ev.target).css("left"))-defaultPosition;
+
+    //console.log(xDelta,yDelta);
+
+    var speed, steering;
+
+    yDelta = Math.min(Math.abs(yDelta),maxDelta)==Math.abs(yDelta) ? yDelta : yDelta>1 ? maxDelta : -maxDelta;
+    xDelta = Math.min(Math.abs(xDelta),maxDelta)==Math.abs(xDelta) ? xDelta : xDelta>1 ? maxDelta : -maxDelta;
+    
+    // speed on Y-axis
+    // -1 reverse <> forward 1
+    speed = parseInt(yDelta/maxDelta*100);
+
+    // steering on X-axis
+    // -1 left <> right 1
+    steering = parseInt(xDelta/maxDelta*100);
+
+    console.log(speed,steering);
+
+    emitToSocket(socket,{type:"navigation",speed:speed,direction:steering});
+    // socket.emit('fromHandheld', {type:"navigation",speed:speed,direction:steering}, function (data) {
+    //   console.log(data); // data will be 'woot'
+    // });
+
+  }
+
+  function updatePositionDeltaByAbsolutePositionControlScheme(ev) {
+
+    var yDelta = -(parseInt($(ev.target).css("top"))-defaultPosition);
+    var xDelta = parseInt($(ev.target).css("left"))-defaultPosition;
+
+    //console.log(xDelta,yDelta);
+
+    var length, angle;
+
+    yDelta = Math.min(Math.abs(yDelta),maxDelta)==Math.abs(yDelta) ? yDelta : yDelta>1 ? maxDelta : -maxDelta;
+    xDelta = Math.min(Math.abs(xDelta),maxDelta)==Math.abs(xDelta) ? xDelta : xDelta>1 ? maxDelta : -maxDelta;
+    
+    // length of hypotenuse
+    length = Math.sqrt(Math.pow(xDelta,2)+Math.pow(yDelta,2));
+
+    length = parseInt(length/maxDelta)*100;
+
+    // angle = arctan x[opposite] / y[adjacent]
+    angle = Math.atan(xDelta/yDelta);
+
+    if (xDelta>1&&yDelta>1) {
+      console.log("Q I");
+
+    } else if (xDelta>1&&yDelta<1) {
+      console.log("Q II");
+      angle = Math.PI+angle;
+
+    } else if (xDelta<1&&yDelta<1) {
+      console.log("Q III");
+      angle = Math.PI+angle;
+
+    } else if (xDelta<1&&yDelta>1) {
+      console.log("Q IV");
+      angle = Math.PI*2+angle;
+    }
+
+    console.log(length, angle);
+
+    emitToSocket(socket,{type:"navigation",speed:length,angle:angle});
+    // socket.emit('fromHandheld', {type:"navigation",speed:speed,direction:steering}, function (data) {
+    //   console.log(data); // data will be 'woot'
+    // });
+
+  }
+
 
   function moveStart(ev) {
     manager.lastX = ev.center.x;

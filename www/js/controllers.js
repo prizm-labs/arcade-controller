@@ -31,9 +31,11 @@ angular.module('starter.controllers', ['btford.socket-io'])
 
     function bootstrapInteractions() {
 
-      window.ioSocket.emit('fromHandheld', 'tobi', function (data) {
-        console.log(data); // data will be 'woot'
-      });
+      window.createPlayer();
+
+      // window.ioSocket.emit('fromHandheld', 'tobi', function (data) {
+      //   console.log(data); // data will be 'woot'
+      // });
 
       bindJoystickHandlers('joystick-knob',window.ioSocket);
       bindButtonHandlers('button-center',window.ioSocket);
@@ -72,6 +74,7 @@ angular.module('starter.controllers', ['btford.socket-io'])
     $scope.$on('modal.hidden', function() {
       // Execute action
       console.log("modal.hidden");
+      deactivatePlayer();
     });
     // Execute action on remove modal
     $scope.$on('modal.removed', function() {
